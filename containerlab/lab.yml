@@ -1,0 +1,29 @@
+name: ant-lab
+
+topology:
+  nodes:
+
+    router1:
+      kind: ceos
+      image: ceos:latest
+      mgmt-ipv4: 172.20.21.11
+      startup-config: configs/router1.cfg
+
+    router2:
+      kind: ceos
+      image: ceos:latest
+      mgmt-ipv4: 172.20.21.12
+      startup-config: configs/router2.cfg 
+    router3:
+      kind: ceos
+      image: ceos:latest
+      mgmt-ipv4: 172.20.21.13
+      startup-config: configs/router3.cfg
+  links:
+    - endpoints: ["router1:eth1", "router2:eth1"]
+    - endpoints: ["router1:eth2", "router3:eth1"]
+    - endpoints: ["router2:eth2", "router3:eth2"]
+
+mgmt:
+  network: ant-mgmt
+  ipv4-subnet: 172.20.21.0/24

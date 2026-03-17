@@ -1,0 +1,162 @@
+{
+  "name": "ant-lab",
+  "type": "clab",
+  "clab": {
+    "config": {
+      "prefix": "clab",
+      "mgmt": {
+        "network": "ant-mgmt",
+        "bridge": "br-5f2cd00cc7b5",
+        "ipv4-subnet": "172.20.21.0/24",
+        "ipv4-gw": "172.20.21.1",
+        "external-access": true
+      }
+    }
+  },
+  "ssh-pub-keys": [],
+  "nodes": {
+    "router1": {
+      "index": "0",
+      "shortname": "router1",
+      "longname": "clab-ant-lab-router1",
+      "fqdn": "router1.ant-lab.io",
+      "group": "",
+      "labdir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router1",
+      "kind": "ceos",
+      "image": "ceos:latest",
+      "mgmt-net": "",
+      "mgmt-intf": "Management0",
+      "mgmt-ipv4-address": "172.20.21.11",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "",
+      "mgmt-ipv6-prefix-length": 0,
+      "mac-address": "00:1c:73:70:60:7c",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-5f2cd00cc7b5",
+        "clab-node-group": "",
+        "clab-node-kind": "ceos",
+        "clab-node-lab-dir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router1",
+        "clab-node-longname": "clab-ant-lab-router1",
+        "clab-node-name": "router1",
+        "clab-node-type": "",
+        "clab-owner": "bramstoker",
+        "clab-topo-file": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/lab.yml",
+        "containerlab": "ant-lab"
+      },
+      "port-bindings": [
+      ]
+    },
+    "router2": {
+      "index": "1",
+      "shortname": "router2",
+      "longname": "clab-ant-lab-router2",
+      "fqdn": "router2.ant-lab.io",
+      "group": "",
+      "labdir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router2",
+      "kind": "ceos",
+      "image": "ceos:latest",
+      "mgmt-net": "",
+      "mgmt-intf": "Management0",
+      "mgmt-ipv4-address": "172.20.21.12",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "",
+      "mgmt-ipv6-prefix-length": 0,
+      "mac-address": "00:1c:73:70:02:34",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-5f2cd00cc7b5",
+        "clab-node-group": "",
+        "clab-node-kind": "ceos",
+        "clab-node-lab-dir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router2",
+        "clab-node-longname": "clab-ant-lab-router2",
+        "clab-node-name": "router2",
+        "clab-node-type": "",
+        "clab-owner": "bramstoker",
+        "clab-topo-file": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/lab.yml",
+        "containerlab": "ant-lab"
+      },
+      "port-bindings": [
+      ]
+    },
+    "router3": {
+      "index": "2",
+      "shortname": "router3",
+      "longname": "clab-ant-lab-router3",
+      "fqdn": "router3.ant-lab.io",
+      "group": "",
+      "labdir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router3",
+      "kind": "ceos",
+      "image": "ceos:latest",
+      "mgmt-net": "",
+      "mgmt-intf": "Management0",
+      "mgmt-ipv4-address": "172.20.21.13",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "",
+      "mgmt-ipv6-prefix-length": 0,
+      "mac-address": "00:1c:73:ca:f1:b4",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-5f2cd00cc7b5",
+        "clab-node-group": "",
+        "clab-node-kind": "ceos",
+        "clab-node-lab-dir": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/clab-ant-lab/router3",
+        "clab-node-longname": "clab-ant-lab-router3",
+        "clab-node-name": "router3",
+        "clab-node-type": "",
+        "clab-owner": "bramstoker",
+        "clab-topo-file": "/home/bramstoker/com617-AutomatedNetworkTroubleshooting-1/containerlab/lab.yml",
+        "containerlab": "ant-lab"
+      },
+      "port-bindings": [
+      ]
+    }
+  },
+  "links": [
+    {
+      "endpoints": {
+        "a": {
+          "node": "router1",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:d0:be:d6",
+          "peer": "z"
+        },
+        "z": {
+          "node": "router2",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:e1:97:ed",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "router1",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:8a:d4:ae",
+          "peer": "z"
+        },
+        "z": {
+          "node": "router3",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:3a:88:6b",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "router2",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:e2:70:d0",
+          "peer": "z"
+        },
+        "z": {
+          "node": "router3",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:22:0e:6d",
+          "peer": "a"
+        }
+      }
+    }
+  ]
+}

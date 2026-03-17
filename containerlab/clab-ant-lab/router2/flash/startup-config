@@ -1,0 +1,55 @@
+! Startup-config last modified at Tue Mar 17 12:40:07 2026 by root
+! device: router2 (cEOSLab, EOS-4.35.2F-46221466.4352F (engineering build))
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+service routing protocols model multi-agent
+!
+logging trap notifications
+logging host 172.20.21.100
+!
+hostname router2
+!
+snmp-server community public ro
+snmp-server host 172.20.21.100 version 2c public
+snmp-server enable traps bgp
+snmp-server enable traps snmp link-down
+snmp-server enable traps snmp link-up
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   description LINK_TO_ROUTER1
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   description LINK_TO_ROUTER3
+   ip address 10.1.23.1/30
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Management0
+   ip address 172.20.21.12/24
+!
+no ip routing
+!
+router bgp 65002
+   router-id 10.0.0.2
+   neighbor 10.1.12.1 remote-as 65001
+   neighbor 10.1.12.1 description PEER_ROUTER1
+   neighbor 10.1.23.2 remote-as 65003
+   neighbor 10.1.23.2 description PEER_ROUTER3
+   !
+   address-family ipv4
+      neighbor 10.1.12.1 activate
+      neighbor 10.1.23.2 activate
+      network 10.0.0.2/32
+!
+end

@@ -1,0 +1,16 @@
+---
+router1:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.21.11
+router2:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.21.12
+router3:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.21.13

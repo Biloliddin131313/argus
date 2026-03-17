@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ant-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - ant-mgmt
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ant-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - ant-mgmt
+
+networks:
+  ant-mgmt:
+    external: true
+    name: ant-mgmt
+
+volumes:
+  grafana-data:
