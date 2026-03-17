@@ -1,413 +1,499 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zero-Day SOC Detection System</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #040a0f;
-    --bg2: #071018;
-    --accent: #00d4ff;
-    --accent2: #ff3c5a;
-    --accent3: #00ff9d;
-    --text: #c8d8e8;
-    --muted: #4a6070;
-    --border: #0d2030;
-    --card: #071520;
-    --mono: 'Share Tech Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; }
-  body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.015) 2px, rgba(0,212,255,0.015) 4px);
-    pointer-events: none; z-index: 1000;
-  }
-  body::after {
-    content: '';
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    padding: 16px 48px;
-    display: flex; justify-content: space-between; align-items: center;
-    background: rgba(4,10,15,0.85); backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 2px; }
-  .nav-links { display: flex; gap: 32px; list-style: none; }
-  .nav-links a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s; }
-  .nav-links a:hover { color: var(--accent); }
-  .nav-status { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--accent3); }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
-  .hero {
-    position: relative; z-index: 1;
-    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
-    padding: 120px 48px 80px; overflow: hidden;
-  }
-  .hero-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 24px; opacity: 0; animation: fadeUp 0.8s 0.2s forwards; }
-  .hero-title { font-size: clamp(42px, 7vw, 96px); font-weight: 800; line-height: 0.95; letter-spacing: -2px; margin-bottom: 32px; opacity: 0; animation: fadeUp 0.8s 0.4s forwards; }
-  .hero-title span { display: block; color: var(--accent); }
-  .hero-title .outline { color: transparent; -webkit-text-stroke: 1px rgba(200,216,232,0.2); }
-  .hero-desc { max-width: 580px; font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 48px; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
-  .hero-actions { display: flex; gap: 16px; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
-  .btn-primary { padding: 14px 32px; background: var(--accent); color: var(--bg); font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; font-weight: 700; transition: all 0.2s; clip-path: polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
-  .btn-primary:hover { background: var(--accent3); transform: translateY(-2px); }
-  .btn-secondary { padding: 14px 32px; border: 1px solid var(--muted); color: var(--muted); font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: all 0.2s; clip-path: polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
-  .hero-visual { position: absolute; right: -100px; top: 50%; transform: translateY(-50%); width: 600px; height: 600px; opacity: 0; animation: fadeIn 1.5s 1s forwards; }
-  .radar { position: relative; width: 100%; height: 100%; }
-  .radar-circle { position: absolute; border-radius: 50%; border: 1px solid rgba(0,212,255,0.12); top: 50%; left: 50%; transform: translate(-50%,-50%); }
-  .radar-circle:nth-child(1){width:100px;height:100px;border-color:rgba(0,212,255,0.4)}
-  .radar-circle:nth-child(2){width:200px;height:200px}
-  .radar-circle:nth-child(3){width:300px;height:300px}
-  .radar-circle:nth-child(4){width:400px;height:400px}
-  .radar-circle:nth-child(5){width:500px;height:500px}
-  .radar-circle:nth-child(6){width:600px;height:600px}
-  .radar-sweep { position: absolute; top: 50%; left: 50%; width: 300px; height: 2px; transform-origin: left center; background: linear-gradient(90deg,rgba(0,212,255,0.8),transparent); animation: sweep 4s linear infinite; }
-  @keyframes sweep { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  .radar-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 1.5s infinite; }
-  @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0;transform:scale(2)} }
-  .radar-dot:nth-child(8){top:30%;left:55%;animation-delay:0.3s}
-  .radar-dot:nth-child(9){top:60%;left:70%;animation-delay:0.9s;background:var(--accent3)}
-  .radar-dot:nth-child(10){top:45%;left:40%;animation-delay:1.4s}
-  .radar-dot:nth-child(11){top:70%;left:45%;animation-delay:0.6s;background:var(--accent3)}
-  .radar-dot:nth-child(12){top:25%;left:65%;animation-delay:2s}
-  .radar-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-  .radar-cross::before,.radar-cross::after { content:''; position:absolute; background:rgba(0,212,255,0.15); }
-  .radar-cross::before{width:600px;height:1px;top:0;left:-300px}
-  .radar-cross::after{width:1px;height:600px;top:-300px;left:0}
-  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeIn { from{opacity:0} to{opacity:0.6} }
-  .stats-bar {
-    position: relative; z-index: 1;
-    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-    background: var(--bg2); padding: 28px 48px;
-    display: grid; grid-template-columns: repeat(5,1fr);
-  }
-  .stat-item { padding: 0 32px; border-right: 1px solid var(--border); text-align: center; }
-  .stat-item:last-child{border-right:none} .stat-item:first-child{padding-left:0}
-  .stat-value { font-family: var(--mono); font-size: 28px; color: var(--accent); display: block; margin-bottom: 4px; }
-  .stat-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  section { position: relative; z-index: 1; padding: 100px 48px; }
-  .section-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
-  .section-title { font-size: clamp(28px,4vw,52px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; line-height: 1.1; }
-  .section-sub { color: var(--muted); font-size: 15px; max-width: 560px; line-height: 1.7; margin-bottom: 64px; }
-  .modules-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 64px; }
-  .module-card { background: var(--card); padding: 32px 24px; transition: background 0.2s; }
-  .module-card:hover { background: #0a1e2e; }
-  .module-number { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 12px; }
-  .module-name { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: white; }
-  .auc-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-bottom: 4px; display: flex; justify-content: space-between; }
-  .auc-bar { height: 3px; background: var(--border); margin-bottom: 12px; }
-  .auc-fill { height: 100%; }
-  .auc-fill.rf{background:var(--accent2)} .auc-fill.iso{background:var(--accent)} .auc-fill.ae{background:var(--accent3)}
-  .difficulty { margin-top: 16px; font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 4px 8px; display: inline-block; }
-  .difficulty.easy{color:var(--accent3);border:1px solid var(--accent3)}
-  .difficulty.medium{color:var(--accent);border:1px solid var(--accent)}
-  .difficulty.hard{color:#ffaa00;border:1px solid #ffaa00}
-  .difficulty.veryhard{color:var(--accent2);border:1px solid var(--accent2)}
-  .models-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; background: var(--border); }
-  .model-card { background: var(--card); padding: 40px 36px; }
-  .model-icon { font-family: var(--mono); font-size: 32px; color: var(--accent); margin-bottom: 20px; display: block; }
-  .model-name { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
-  .model-type { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
-  .model-desc { font-size: 14px; line-height: 1.7; color: var(--muted); margin-bottom: 24px; }
-  .model-avg { font-family: var(--mono); font-size: 13px; }
-  .model-avg span { color: var(--accent3); }
-  .results-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
-  .results-table th { padding: 14px 20px; text-align: left; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-  .results-table td { padding: 16px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .results-table tr:hover td { background: rgba(0,212,255,0.03); }
-  .td-attack{font-weight:700;color:white;font-size:14px;font-family:var(--sans)}
-  .td-perfect{color:var(--accent3)} .td-good{color:var(--accent)} .td-medium{color:#ffaa00} .td-poor{color:var(--accent2)}
-  .deployment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); }
-  .deploy-card { background: var(--card); padding: 40px; }
-  .deploy-title { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
-  .terminal { background: #020810; border: 1px solid var(--border); padding: 20px; font-family: var(--mono); font-size: 12px; line-height: 2; }
-  .terminal .prompt{color:var(--accent3)} .terminal .cmd{color:white} .terminal .comment{color:var(--muted)} .terminal .output{color:var(--accent)}
-  .service-list { list-style: none; }
-  .service-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
-  .service-item:last-child{border-bottom:none}
-  .service-name{color:var(--text)} .service-url{color:var(--accent)}
-  .service-live { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--accent3); }
-  .shap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
-  .shap-feature { margin-bottom: 20px; }
-  .shap-feature-name { font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px; display: flex; justify-content: space-between; }
-  .shap-feature-name span{color:var(--accent)}
-  .shap-bar-bg { height: 4px; background: var(--border); }
-  .shap-bar-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent3)); }
-  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 48px; display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); }
-  footer a{color:var(--accent);text-decoration:none}
-  .divider{border:none;border-top:1px solid var(--border);margin:0}
-  .reveal{opacity:0;transform:translateY(20px);transition:opacity 0.7s,transform 0.7s}
-  .reveal.visible{opacity:1;transform:translateY(0)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARGUS — Network Monitoring</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid #e8e8e8;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .logo-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: 6px;
+    }
+
+    .logo-tag {
+      font-size: 12px; font-weight: 500;
+      color: #666;
+      letter-spacing: 2px;
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px; font-weight: 600;
+      color: #111;
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4a9a6a;
+    }
+
+    .dot-red { background: #c44a4a; }
+
+    main { padding: 24px 28px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #777;
+      margin-bottom: 14px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #777;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #efefef;
+    }
+
+    .router-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rdot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4a9a6a;
+      flex-shrink: 0;
+    }
+
+    .rdot-red { background: #c44a4a; }
+
+    .router-detail {
+      font-size: 14px; font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .status-line {
+      font-size: 12px; font-weight: 500;
+      color: #4a9a6a;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .status-line-down {
+      color: #c44a4a;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-core { background: #eef4fa; color: #4a7aaa; border: 1px solid #c8daf0; }
+    .badge-edge { background: #eef6ee; color: #4a8a4a; border: 1px solid #c8e0c8; }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #1a1a1a;
+      font-size: 14px; font-weight: 500;
+      margin-bottom: 14px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    select:focus { outline: none; border-color: #4a7aaa; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      font-size: 14px; font-weight: 500;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Segoe UI', sans-serif;
+      transition: filter 0.15s;
+    }
+
+    .btn:hover { filter: brightness(0.95); }
+    .btn:active { filter: brightness(0.88); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-trigger {
+      background: #fff0f0;
+      color: #b03a3a;
+      border: 1.5px solid #f0c0c0;
+    }
+
+    .btn-restore {
+      background: #f0fff0;
+      color: #3a8a3a;
+      border: 1.5px solid #b8e0b8;
+    }
+
+    .btn-diag {
+      background: #f0f4ff;
+      color: #3a5aaa;
+      border: 1.5px solid #b8caf0;
+    }
+
+    .log-scroll {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      padding: 9px 12px;
+      margin-bottom: 7px;
+      font-size: 14px; font-weight: 600;
+      border-radius: 5px;
+    }
+
+    .log-triggered { background: #fff0f0; border-left: 3px solid #e08080; }
+    .log-restored  { background: #f0fff0; border-left: 3px solid #6aaa6a; }
+    .log-info      { background: #f0f4ff; border-left: 3px solid #6a9aca; }
+
+    .log-time { font-size: 11px; font-weight: 600; color: #777; }
+    .log-msg  { color: #111; margin-top: 3px; }
+
+    .terminal {
+      background: #f0f0f0;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px; font-weight: 600;
+      color: #111;
+      min-height: 120px;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.8;
+    }
+
+    .prompt { color: #333; font-weight: 700; }
+    .cmd    { color: #1a6a1a; font-weight: 700; }
+    .muted  { color: #555; font-weight: 600; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #4a7aaa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .tagline {
+      font-size: 12px; font-weight: 500;
+      color: #888;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+  </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-logo">// SOC-DETECTION-v1.0</div>
-  <ul class="nav-links">
-    <li><a href="#modules">Modules</a></li>
-    <li><a href="#models">Models</a></li>
-    <li><a href="#results">Results</a></li>
-    <li><a href="#deployment">Deployment</a></li>
-    <li><a href="https://github.com/Biloliddin131313/zero-day-soc-detection" target="_blank">GitHub</a></li>
-  </ul>
-  <div class="nav-status"><div class="status-dot"></div>SYSTEM ACTIVE</div>
-</nav>
-
-<section class="hero">
-  <div class="hero-tag">// BSc Cyber Security Management — Southampton Solent University</div>
-  <h1 class="hero-title">
-    <span>Zero-Day</span>
-    <span class="outline">SOC Detection</span>
-    <span>System</span>
-  </h1>
-  <p class="hero-desc">Unsupervised machine learning that detects zero-day exploits in real time — without ever being trained on attack data. Built on CICIDS2017 across 5 attack modules with live Prometheus and Grafana deployment.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/Biloliddin131313/zero-day-soc-detection" target="_blank" class="btn-primary">View on GitHub</a>
-    <a href="#results" class="btn-secondary">See Results</a>
-  </div>
-  <div class="hero-visual">
-    <div class="radar">
-      <div class="radar-circle"></div><div class="radar-circle"></div><div class="radar-circle"></div>
-      <div class="radar-circle"></div><div class="radar-circle"></div><div class="radar-circle"></div>
-      <div class="radar-cross"></div>
-      <div class="radar-sweep"></div>
-      <div class="radar-dot"></div><div class="radar-dot"></div><div class="radar-dot"></div>
-      <div class="radar-dot"></div><div class="radar-dot"></div>
-    </div>
-  </div>
-</section>
-
-<div class="stats-bar">
-  <div class="stat-item"><span class="stat-value">5</span><span class="stat-label">Attack Modules</span></div>
-  <div class="stat-item"><span class="stat-value">3</span><span class="stat-label">ML Models</span></div>
-  <div class="stat-item"><span class="stat-value">0.99</span><span class="stat-label">Avg RF AUC</span></div>
-  <div class="stat-item"><span class="stat-value">481K+</span><span class="stat-label">Flows Analysed</span></div>
-  <div class="stat-item"><span class="stat-value">Live</span><span class="stat-label">Grafana Dashboard</span></div>
-</div>
-
-<section id="modules">
-  <div class="section-tag">// 01 — Attack Modules</div>
-  <h2 class="section-title reveal">Five attack types.<br>One detection system.</h2>
-  <p class="section-sub reveal">Each module trains exclusively on benign traffic. The model never sees attack data — any deviation from normal behaviour triggers an alert.</p>
-  <div class="modules-grid reveal">
-    <div class="module-card">
-      <div class="module-number">MODULE 01</div>
-      <div class="module-name">DDoS</div>
-      <div class="auc-label"><span>RF</span><span class="td-perfect">1.000</span></div>
-      <div class="auc-bar"><div class="auc-fill rf" style="width:100%"></div></div>
-      <div class="auc-label"><span>ISO</span><span class="td-good">0.752</span></div>
-      <div class="auc-bar"><div class="auc-fill iso" style="width:75.2%"></div></div>
-      <div class="auc-label"><span>AE</span><span class="td-good">0.859</span></div>
-      <div class="auc-bar"><div class="auc-fill ae" style="width:85.9%"></div></div>
-      <span class="difficulty medium">Medium</span>
-    </div>
-    <div class="module-card">
-      <div class="module-number">MODULE 02</div>
-      <div class="module-name">Brute Force</div>
-      <div class="auc-label"><span>RF</span><span class="td-perfect">0.9998</span></div>
-      <div class="auc-bar"><div class="auc-fill rf" style="width:99.98%"></div></div>
-      <div class="auc-label"><span>ISO</span><span class="td-medium">0.669</span></div>
-      <div class="auc-bar"><div class="auc-fill iso" style="width:66.9%"></div></div>
-      <div class="auc-label"><span>AE</span><span class="td-medium">0.687</span></div>
-      <div class="auc-bar"><div class="auc-fill ae" style="width:68.7%"></div></div>
-      <span class="difficulty hard">Hard</span>
-    </div>
-    <div class="module-card">
-      <div class="module-number">MODULE 03</div>
-      <div class="module-name">DoS</div>
-      <div class="auc-label"><span>RF</span><span class="td-perfect">1.000</span></div>
-      <div class="auc-bar"><div class="auc-fill rf" style="width:100%"></div></div>
-      <div class="auc-label"><span>ISO</span><span class="td-good">0.829</span></div>
-      <div class="auc-bar"><div class="auc-fill iso" style="width:82.9%"></div></div>
-      <div class="auc-label"><span>AE</span><span class="td-good">0.832</span></div>
-      <div class="auc-bar"><div class="auc-fill ae" style="width:83.2%"></div></div>
-      <span class="difficulty easy">Easy</span>
-    </div>
-    <div class="module-card">
-      <div class="module-number">MODULE 04</div>
-      <div class="module-name">Web Attacks</div>
-      <div class="auc-label"><span>RF</span><span class="td-perfect">0.9998</span></div>
-      <div class="auc-bar"><div class="auc-fill rf" style="width:99.98%"></div></div>
-      <div class="auc-label"><span>ISO</span><span class="td-medium">0.702</span></div>
-      <div class="auc-bar"><div class="auc-fill iso" style="width:70.2%"></div></div>
-      <div class="auc-label"><span>AE</span><span class="td-good">0.769</span></div>
-      <div class="auc-bar"><div class="auc-fill ae" style="width:76.9%"></div></div>
-      <span class="difficulty medium">Medium</span>
-    </div>
-    <div class="module-card">
-      <div class="module-number">MODULE 05</div>
-      <div class="module-name">Botnet</div>
-      <div class="auc-label"><span>RF</span><span class="td-perfect">0.9996</span></div>
-      <div class="auc-bar"><div class="auc-fill rf" style="width:99.96%"></div></div>
-      <div class="auc-label"><span>ISO</span><span class="td-poor">0.588</span></div>
-      <div class="auc-bar"><div class="auc-fill iso" style="width:58.8%"></div></div>
-      <div class="auc-label"><span>AE</span><span class="td-poor">0.574</span></div>
-      <div class="auc-bar"><div class="auc-fill ae" style="width:57.4%"></div></div>
-      <span class="difficulty veryhard">Very Hard</span>
-    </div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<section id="models">
-  <div class="section-tag">// 02 — Machine Learning Models</div>
-  <h2 class="section-title reveal">Three models.<br>Two are blind to attacks.</h2>
-  <p class="section-sub reveal">The unsupervised models only learn normal behaviour. They have never seen a single attack packet — making them capable of detecting threats that have never existed before.</p>
-  <div class="models-grid reveal">
-    <div class="model-card">
-      <span class="model-icon">[RF]</span>
-      <div class="model-name">Random Forest</div>
-      <div class="model-type">Supervised — Baseline</div>
-      <p class="model-desc">Trained with labelled attack data. Acts as the gold standard comparison. Near-perfect performance across all modules demonstrates the problem is solvable — the challenge is doing it without labels.</p>
-      <div class="model-avg">Avg AUC: <span>0.9999</span></div>
-    </div>
-    <div class="model-card">
-      <span class="model-icon">[IF]</span>
-      <div class="model-name">Isolation Forest</div>
-      <div class="model-type">Unsupervised — Zero-Day</div>
-      <p class="model-desc">Isolates anomalies by randomly partitioning the feature space. Trained only on benign traffic. Anomalies require fewer splits to isolate — detectable without any prior attack knowledge.</p>
-      <div class="model-avg">Avg AUC: <span>0.7079</span></div>
-    </div>
-    <div class="model-card">
-      <span class="model-icon">[AE]</span>
-      <div class="model-name">Autoencoder</div>
-      <div class="model-type">Unsupervised — Zero-Day</div>
-      <p class="model-desc">A deep neural network that learns to reconstruct normal traffic. When attack traffic passes through, reconstruction error spikes — flagging the anomaly. Outperforms Isolation Forest on 4 of 5 modules.</p>
-      <div class="model-avg">Avg AUC: <span>0.7342</span></div>
-    </div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<section id="results">
-  <div class="section-tag">// 03 — Results</div>
-  <h2 class="section-title reveal">The numbers.</h2>
-  <p class="section-sub reveal">Full ROC-AUC scores across all 5 attack modules and 3 models. Autoencoder consistently outperforms Isolation Forest — confirming the advantage of deep learning for anomaly detection.</p>
-  <table class="results-table reveal">
-    <thead>
-      <tr>
-        <th>Attack Module</th><th>Flows</th><th>Random Forest</th><th>Isolation Forest</th><th>Autoencoder</th><th>Detectability</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td class="td-attack">DDoS</td><td>225,745</td><td class="td-perfect">1.0000</td><td class="td-good">0.7522</td><td class="td-good">0.8592</td><td><span class="difficulty medium">Medium</span></td></tr>
-      <tr><td class="td-attack">Brute Force</td><td>55,340</td><td class="td-perfect">0.9998</td><td class="td-medium">0.6688</td><td class="td-medium">0.6867</td><td><span class="difficulty hard">Hard</span></td></tr>
-      <tr><td class="td-attack">DoS</td><td>139,170</td><td class="td-perfect">1.0000</td><td class="td-good">0.8290</td><td class="td-good">0.8318</td><td><span class="difficulty easy">Easy</span></td></tr>
-      <tr><td class="td-attack">Web Attacks</td><td>24,911</td><td class="td-perfect">0.9998</td><td class="td-medium">0.7018</td><td class="td-good">0.7694</td><td><span class="difficulty medium">Medium</span></td></tr>
-      <tr><td class="td-attack">Botnet</td><td>24,697</td><td class="td-perfect">0.9996</td><td class="td-poor">0.5875</td><td class="td-poor">0.5740</td><td><span class="difficulty veryhard">Very Hard</span></td></tr>
-    </tbody>
-  </table>
-</section>
-
-<hr class="divider">
-
-<section id="shap">
-  <div class="section-tag">// 04 — Explainability</div>
-  <h2 class="section-title reveal">Why did it flag that?</h2>
-  <p class="section-sub reveal">SHAP (SHapley Additive exPlanations) reveals which network features drove each detection decision — making the system transparent for SOC analysts.</p>
-  <div class="shap-grid reveal">
+<header>
+  <div class="logo">
     <div>
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:28px">TOP 10 FEATURES — DDoS MODULE</div>
-      <div class="shap-feature"><div class="shap-feature-name">Bwd Packet Length Mean <span>0.2407</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:100%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Bwd Packet Length Max <span>0.2405</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:99.9%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Bwd Packet Length Std <span>0.2097</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:87.1%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Avg Bwd Segment Size <span>0.1967</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:81.7%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Packet Length Std <span>0.1612</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:67%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Packet Length Variance <span>0.1437</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:59.7%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Packet Length Mean <span>0.1380</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:57.3%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Flow IAT Max <span>0.1131</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:47%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Max Packet Length <span>0.1041</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:43.3%"></div></div></div>
-      <div class="shap-feature"><div class="shap-feature-name">Average Packet Size <span>0.0969</span></div><div class="shap-bar-bg"><div class="shap-bar-fill" style="width:40.3%"></div></div></div>
-    </div>
-    <div style="background:var(--card);padding:40px;border:1px solid var(--border)">
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:28px">KEY INSIGHT</div>
-      <p style="font-size:15px;line-height:1.8;color:var(--text);margin-bottom:20px">The top features are all related to <strong style="color:var(--accent)">backward packet length</strong> — the size of packets flowing back from the server to the client.</p>
-      <p style="font-size:15px;line-height:1.8;color:var(--muted);margin-bottom:20px">During a DDoS attack, the server sends near-identical small error responses to thousands of spoofed requests — making backward packet sizes unnaturally uniform and small.</p>
-      <p style="font-size:15px;line-height:1.8;color:var(--muted)">The Isolation Forest learned this pattern purely from normal traffic deviation — without ever seeing a single DDoS packet during training.</p>
+      <div class="logo-name">ARGUS</div>
+      <div class="tagline">Always watching. Always ready.</div>
     </div>
   </div>
-</section>
-
-<hr class="divider">
-
-<section id="deployment">
-  <div class="section-tag">// 05 — Live Deployment</div>
-  <h2 class="section-title reveal">Running live.</h2>
-  <p class="section-sub reveal">Real-time metrics pushed to Prometheus every 10 seconds. Five attack modules monitored simultaneously. Visualised in Grafana.</p>
-  <div class="deployment-grid reveal">
-    <div class="deploy-card">
-      <div class="deploy-title">// Start the system</div>
-      <div class="terminal">
-        <div><span class="comment"># Terminal 1 — SOC Exporter</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">cd ~/zero-day-soc-detection</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">source venv/bin/activate</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">python3 scripts/soc_exporter.py</span></div>
-        <div><span class="output">[DDoS] ATTACK=128,027 BENIGN=97,718</span></div>
-        <div><span class="output">[Brute Force] ATTACK=13,833 BENIGN=41,507</span></div>
-        <div><span class="output">[DoS] ATTACK=89,330 BENIGN=267,382</span></div>
-        <div><span class="output">[Web Attacks] ATTACK=2,189 BENIGN=54,472</span></div>
-        <div><span class="output">[Botnet] ATTACK=1,977 BENIGN=54,684</span></div>
-        <br>
-        <div><span class="comment"># Terminal 2 — Prometheus</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">./prometheus --config.file=prometheus.yml</span></div>
-      </div>
+  <div class="header-right">
+    <div class="api-status">
+      <span class="dot" id="api-dot"></span>
+      <span id="api-label">Connecting...</span>
     </div>
-    <div class="deploy-card">
-      <div class="deploy-title">// Access points</div>
-      <ul class="service-list">
-        <li class="service-item"><span class="service-name">Jupyter Notebook</span><span class="service-url">localhost:8888</span><span class="service-live"><div class="status-dot"></div>Live</span></li>
-        <li class="service-item"><span class="service-name">Prometheus</span><span class="service-url">localhost:9090</span><span class="service-live"><div class="status-dot"></div>Live</span></li>
-        <li class="service-item"><span class="service-name">Grafana Dashboard</span><span class="service-url">localhost:3000</span><span class="service-live"><div class="status-dot"></div>Live</span></li>
-        <li class="service-item"><span class="service-name">Metrics Endpoint</span><span class="service-url">localhost:8001/metrics</span><span class="service-live"><div class="status-dot"></div>Live</span></li>
-      </ul>
-      <br>
-      <div class="deploy-title" style="margin-top:24px">// Tech Stack</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">Python 3.12</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">TensorFlow</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">Scikit-learn</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">SHAP</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">Prometheus</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">Grafana</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">Pandas</span>
-        <span style="font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--border);color:var(--muted)">CICIDS2017</span>
-      </div>
-    </div>
+    <span id="clock"></span>
   </div>
-</section>
+</header>
 
-<footer>
-  <div>Built by <a href="https://github.com/Biloliddin131313" target="_blank">Biloliddin Turaev</a> — BSc Cyber Security Management, Southampton Solent University 2026</div>
-  <div><a href="https://github.com/Biloliddin131313/zero-day-soc-detection" target="_blank">github.com/Biloliddin131313/zero-day-soc-detection</a></div>
-</footer>
+<main>
+
+  <div class="section-label">Router status</div>
+  <div class="grid3" id="router-cards">
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+  </div>
+
+  <div class="grid2">
+
+    <div class="card">
+      <div class="card-label">Fault control</div>
+      <select id="fault-select">
+        <option value="interface_down">Interface down</option>
+        <option value="bgp_neighbour_change">BGP neighbourship change</option>
+        <option value="hardware_fault">Hardware fault</option>
+        <option value="route_flap">Route flap</option>
+      </select>
+      <button class="btn btn-trigger" id="btn-trigger" onclick="triggerFault()">
+        Trigger fault
+      </button>
+      <button class="btn btn-restore" id="btn-restore" onclick="restoreFault()">
+        Restore fault
+      </button>
+      <button class="btn btn-diag" id="btn-diag" onclick="runDiagnostic()">
+        Run diagnostic
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Event log</div>
+      <div class="log-scroll" id="log-container">
+        <div class="log-entry log-info">
+          <div class="log-time">System</div>
+          <div class="log-msg">ARGUS initialised. Monitoring active</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <div class="card-label">Diagnostic output</div>
+    <div class="terminal" id="diag-output"><span class="muted">Select a fault scenario and click Run diagnostic to see output here...</span>
+<span class="blink">_</span></div>
+  </div>
+
+</main>
 
 <script>
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
-  }, {threshold:0.1});
-  reveals.forEach(el => observer.observe(el));
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+  const API = 'http://localhost:5001';
+
+  const FAULT_ROUTERS = {
+    interface_down: 'router2',
+    bgp_neighbour_change: 'router1',
+    hardware_fault: 'router3',
+    route_flap: 'router3'
+  };
+
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toTimeString().split(' ')[0];
+  }, 1000);
+
+  async function checkAPI() {
+    try {
+      await fetch(`${API}/api/status`);
+      document.getElementById('api-dot').className = 'dot';
+      document.getElementById('api-label').textContent = 'API online';
+    } catch(e) {
+      document.getElementById('api-dot').className = 'dot dot-red';
+      document.getElementById('api-label').textContent = 'API offline';
+    }
+  }
+
+  async function loadRouters() {
+    try {
+      const res = await fetch(`${API}/api/routers`);
+      const data = await res.json();
+      const container = document.getElementById('router-cards');
+      container.innerHTML = '';
+      for (const [name, info] of Object.entries(data)) {
+        container.innerHTML += `
+          <div class="card">
+            <div class="card-label">Node</div>
+            <div class="router-name">
+              <span class="rdot"></span>${name}
+            </div>
+            <div class="router-detail">${info.host}</div>
+            <div class="router-detail">BGP AS ${info.bgp_as}</div>
+            <div class="status-line">Online</div>
+            <span class="badge badge-${info.role}">${info.role}</span>
+          </div>`;
+      }
+    } catch(e) {}
+  }
+
+  function addLog(msg, type = 'info') {
+    const container = document.getElementById('log-container');
+    const time = new Date().toTimeString().split(' ')[0];
+    const div = document.createElement('div');
+    div.className = `log-entry log-${type}`;
+    div.innerHTML = `<div class="log-time">${time}</div><div class="log-msg">${msg}</div>`;
+    container.insertBefore(div, container.firstChild);
+  }
+
+  function setTerminal(html) {
+    document.getElementById('diag-output').innerHTML = html;
+  }
+
+  function setBtns(disabled) {
+    ['btn-trigger','btn-restore','btn-diag'].forEach(id => {
+      document.getElementById(id).disabled = disabled;
     });
-  });
+  }
+
+  async function triggerFault() {
+    const fault = document.getElementById('fault-select').value;
+    setBtns(true);
+    addLog(`Triggering ${fault}...`, 'triggered');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Triggering ${fault}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/fault/trigger`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault})
+      });
+      const data = await res.json();
+      addLog(`Triggered: ${fault} on ${data.detail.router}`, 'triggered');
+      setTerminal(`<span class="prompt">argus# </span><span class="cmd">fault trigger ${fault}</span>
+Status  : TRIGGERED
+Fault   : ${fault}
+Router  : ${data.detail.router}
+Time    : ${data.detail.timestamp}
+
+<span class="muted">${data.output || 'Command executed successfully'}</span>
+<span class="blink">_</span>`);
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'triggered');
+    }
+    setBtns(false);
+  }
+
+  async function restoreFault() {
+    const fault = document.getElementById('fault-select').value;
+    setBtns(true);
+    addLog(`Restoring ${fault}...`, 'restored');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Restoring ${fault}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/fault/restore`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault})
+      });
+      const data = await res.json();
+      addLog(`Restored: ${fault} on ${data.detail.router}`, 'restored');
+      setTerminal(`<span class="prompt">argus# </span><span class="cmd">fault restore ${fault}</span>
+Status  : RESTORED
+Fault   : ${fault}
+Router  : ${data.detail.router}
+Time    : ${data.detail.timestamp}
+
+<span class="muted">${data.output || 'Command executed successfully'}</span>
+<span class="blink">_</span>`);
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'restored');
+    }
+    setBtns(false);
+  }
+
+  async function runDiagnostic() {
+    const fault = document.getElementById('fault-select').value;
+    const router = FAULT_ROUTERS[fault];
+    setBtns(true);
+    addLog(`Running diagnostic: ${fault} on ${router}`, 'info');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Running diagnostics on ${router}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/diagnostic/run`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault, router})
+      });
+      const data = await res.json();
+      let out = `<span class="prompt">argus# </span><span class="cmd">diagnostic run ${fault} --router ${router}</span>\n`;
+      out += `Fault   : ${data.fault}\nRouter  : ${data.router}\nTime    : ${data.timestamp}\n`;
+      out += `${'─'.repeat(48)}\n\n`;
+      for (const [cmd, result] of Object.entries(data.diagnostics)) {
+        out += `<span class="prompt">${router}# </span><span class="cmd">${cmd}</span>\n${result}\n`;
+      }
+      out += `<span class="blink">_</span>`;
+      setTerminal(out);
+      addLog(`Diagnostic complete: ${fault}`, 'info');
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'info');
+    }
+    setBtns(false);
+  }
+
+  checkAPI();
+  loadRouters();
+  setInterval(checkAPI, 10000);
+  setInterval(loadRouters, 30000);
 </script>
+
 </body>
 </html>
