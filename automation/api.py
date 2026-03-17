@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from datetime import datetime
 import subprocess
+import requests
 
 app = Flask(__name__)
+CORS(app)
 
 ROUTERS = {
     "router1": {"host": "172.20.21.11", "role": "core", "bgp_as": 65001},
@@ -46,6 +49,16 @@ DIAGNOSTICS = {
 }
 
 fault_log = []
+MATTERMOST_WEBHOOK = "http://localhost:8065/hooks/gwinwdnsjjy65ef7ah3qxm1zgc"
+
+
+def notify_mattermost(message, colour="#4a9a6a"):
+    try:
+        requests.post(MATTERMOST_WEBHOOK, json={
+            "attachments": [{"color": colour, "text": message}]
+        }, timeout=5)
+    except Exception as e:
+        print(f"Mattermost notification failed: {e}")
 
 
 def exec_config(router_name, commands):
@@ -103,6 +116,10 @@ def trigger_fault():
         "timestamp": datetime.now().isoformat(),
     }
     fault_log.append(entry)
+    notify_mattermost(
+        f"FAULT TRIGGERED: `{fault_name}` on `{fault['router']}`\nTime: {entry['timestamp']}",
+        "#c44a4a"
+    )
     return jsonify({"status": "triggered", "detail": entry, "output": output})
 
 
@@ -121,6 +138,10 @@ def restore_fault():
         "timestamp": datetime.now().isoformat(),
     }
     fault_log.append(entry)
+    notify_mattermost(
+        f"FAULT RESTORED: `{fault_name}` on `{fault['router']}`\nTime: {entry['timestamp']}",
+        "#4a9a6a"
+    )
     return jsonify({"status": "restored", "detail": entry, "output": output})
 
 
@@ -133,6 +154,10 @@ def run_diagnostic():
         return jsonify({"error": f"Unknown router: {router_name}"}), 400
     cmds = DIAGNOSTICS.get(fault_name, ["show version", "show interfaces status"])
     results = {cmd: exec_show(router_name, cmd) for cmd in cmds}
+    notify_mattermost(
+        f"DIAGNOSTIC RUN: `{fault_name}` on `{router_name}`\nTime: {datetime.now().isoformat()}",
+        "#4a7aaa"
+    )
     return jsonify({
         "router": router_name,
         "fault": fault_name,
@@ -156,5 +181,3 @@ def get_runbooks():
 if __name__ == "__main__":
     print("\nANT REST API starting on http://localhost:5001\n")
     app.run(host="0.0.0.0", port=5001, debug=True)
-
-
