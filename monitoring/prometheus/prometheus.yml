@@ -1,26 +1,9 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 30s
 
 scrape_configs:
-
-  - job_name: 'router1'
+  - job_name: 'ant-network'
     static_configs:
-      - targets: ['172.20.21.11:9100']
+      - targets: ['172.17.133.152:9200']
         labels:
-          router: 'router1'
-          role: 'core'
-
-  - job_name: 'router2'
-    static_configs:
-      - targets: ['172.20.21.12:9100']
-        labels:
-          router: 'router2'
-          role: 'edge'
-
-  - job_name: 'router3'
-    static_configs:
-      - targets: ['172.20.21.13:9100']
-        labels:
-          router: 'router3'
-          role: 'edge'
+          lab: 'ant-lab'
