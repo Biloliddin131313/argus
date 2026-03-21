@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARGUS — Network Monitoring</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid #e8e8e8;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .logo-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: 6px;
+    }
+
+    .logo-tag {
+      font-size: 12px; font-weight: 500;
+      color: #666;
+      letter-spacing: 2px;
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px; font-weight: 600;
+      color: #111;
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4a9a6a;
+    }
+
+    .dot-red { background: #c44a4a; }
+
+    main { padding: 24px 28px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #777;
+      margin-bottom: 14px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #777;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #efefef;
+    }
+
+    .router-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rdot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4a9a6a;
+      flex-shrink: 0;
+    }
+
+    .rdot-red { background: #c44a4a; }
+
+    .router-detail {
+      font-size: 14px; font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .status-line {
+      font-size: 12px; font-weight: 500;
+      color: #4a9a6a;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .status-line-down {
+      color: #c44a4a;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-core { background: #eef4fa; color: #4a7aaa; border: 1px solid #c8daf0; }
+    .badge-edge { background: #eef6ee; color: #4a8a4a; border: 1px solid #c8e0c8; }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #1a1a1a;
+      font-size: 14px; font-weight: 500;
+      margin-bottom: 14px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    select:focus { outline: none; border-color: #4a7aaa; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      font-size: 14px; font-weight: 500;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Segoe UI', sans-serif;
+      transition: filter 0.15s;
+    }
+
+    .btn:hover { filter: brightness(0.95); }
+    .btn:active { filter: brightness(0.88); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-trigger {
+      background: #fff0f0;
+      color: #b03a3a;
+      border: 1.5px solid #f0c0c0;
+    }
+
+    .btn-restore {
+      background: #f0fff0;
+      color: #3a8a3a;
+      border: 1.5px solid #b8e0b8;
+    }
+
+    .btn-diag {
+      background: #f0f4ff;
+      color: #3a5aaa;
+      border: 1.5px solid #b8caf0;
+    }
+
+    .log-scroll {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      padding: 9px 12px;
+      margin-bottom: 7px;
+      font-size: 14px; font-weight: 600;
+      border-radius: 5px;
+    }
+
+    .log-triggered { background: #fff0f0; border-left: 3px solid #e08080; }
+    .log-restored  { background: #f0fff0; border-left: 3px solid #6aaa6a; }
+    .log-info      { background: #f0f4ff; border-left: 3px solid #6a9aca; }
+
+    .log-time { font-size: 11px; font-weight: 600; color: #777; }
+    .log-msg  { color: #111; margin-top: 3px; }
+
+    .terminal {
+      background: #f0f0f0;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px; font-weight: 600;
+      color: #111;
+      min-height: 120px;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.8;
+    }
+
+    .prompt { color: #333; font-weight: 700; }
+    .cmd    { color: #1a6a1a; font-weight: 700; }
+    .muted  { color: #555; font-weight: 600; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #4a7aaa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .tagline {
+      font-size: 12px; font-weight: 500;
+      color: #888;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div>
+      <div class="logo-name">ARGUS</div>
+      <div class="tagline">Always watching. Always ready.</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="api-status">
+      <span class="dot" id="api-dot"></span>
+      <span id="api-label">Connecting...</span>
+    </div>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<main>
+
+  <div class="section-label">Router status</div>
+  <div class="grid3" id="router-cards">
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+    <div class="card"><div class="card-label">Node</div><div class="router-detail">Loading...</div></div>
+  </div>
+
+  <div class="grid2">
+
+    <div class="card">
+      <div class="card-label">Fault control</div>
+      <select id="fault-select">
+        <option value="interface_down">Interface down</option>
+        <option value="bgp_neighbour_change">BGP neighbourship change</option>
+        <option value="hardware_fault">Hardware fault</option>
+        <option value="route_flap">Route flap</option>
+      </select>
+      <button class="btn btn-trigger" id="btn-trigger" onclick="triggerFault()">
+        Trigger fault
+      </button>
+      <button class="btn btn-restore" id="btn-restore" onclick="restoreFault()">
+        Restore fault
+      </button>
+      <button class="btn btn-diag" id="btn-diag" onclick="runDiagnostic()">
+        Run diagnostic
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Event log</div>
+      <div class="log-scroll" id="log-container">
+        <div class="log-entry log-info">
+          <div class="log-time">System</div>
+          <div class="log-msg">ARGUS initialised. Monitoring active</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <div class="card-label">Diagnostic output</div>
+    <div class="terminal" id="diag-output"><span class="muted">Select a fault scenario and click Run diagnostic to see output here...</span>
+<span class="blink">_</span></div>
+  </div>
+
+</main>
+
+<script>
+  const API = "https://web-production-4de00.up.railway.app";
+
+  const FAULT_ROUTERS = {
+    interface_down: 'router2',
+    bgp_neighbour_change: 'router1',
+    hardware_fault: 'router3',
+    route_flap: 'router3'
+  };
+
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toTimeString().split(' ')[0];
+  }, 1000);
+
+  async function checkAPI() {
+    try {
+      await fetch(`${API}/api/status`);
+      document.getElementById('api-dot').className = 'dot';
+      document.getElementById('api-label').textContent = 'API online';
+    } catch(e) {
+      document.getElementById('api-dot').className = 'dot dot-red';
+      document.getElementById('api-label').textContent = 'API offline';
+    }
+  }
+
+  async function loadRouters() {
+    try {
+      const res = await fetch(`${API}/api/routers`);
+      const data = await res.json();
+      const container = document.getElementById('router-cards');
+      container.innerHTML = '';
+      for (const [name, info] of Object.entries(data)) {
+        container.innerHTML += `
+          <div class="card">
+            <div class="card-label">Node</div>
+            <div class="router-name">
+              <span class="rdot"></span>${name}
+            </div>
+            <div class="router-detail">${info.host}</div>
+            <div class="router-detail">BGP AS ${info.bgp_as}</div>
+            <div class="status-line">Online</div>
+            <span class="badge badge-${info.role}">${info.role}</span>
+          </div>`;
+      }
+    } catch(e) {}
+  }
+
+  function addLog(msg, type = 'info') {
+    const container = document.getElementById('log-container');
+    const time = new Date().toTimeString().split(' ')[0];
+    const div = document.createElement('div');
+    div.className = `log-entry log-${type}`;
+    div.innerHTML = `<div class="log-time">${time}</div><div class="log-msg">${msg}</div>`;
+    container.insertBefore(div, container.firstChild);
+  }
+
+  function setTerminal(html) {
+    document.getElementById('diag-output').innerHTML = html;
+  }
+
+  function setBtns(disabled) {
+    ['btn-trigger','btn-restore','btn-diag'].forEach(id => {
+      document.getElementById(id).disabled = disabled;
+    });
+  }
+
+  async function triggerFault() {
+    const fault = document.getElementById('fault-select').value;
+    setBtns(true);
+    addLog(`Triggering ${fault}...`, 'triggered');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Triggering ${fault}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/fault/trigger`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault})
+      });
+      const data = await res.json();
+      addLog(`Triggered: ${fault} on ${data.detail.router}`, 'triggered');
+      setTerminal(`<span class="prompt">argus# </span><span class="cmd">fault trigger ${fault}</span>
+Status  : TRIGGERED
+Fault   : ${fault}
+Router  : ${data.detail.router}
+Time    : ${data.detail.timestamp}
+
+<span class="muted">${data.output || 'Command executed successfully'}</span>
+<span class="blink">_</span>`);
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'triggered');
+    }
+    setBtns(false);
+  }
+
+  async function restoreFault() {
+    const fault = document.getElementById('fault-select').value;
+    setBtns(true);
+    addLog(`Restoring ${fault}...`, 'restored');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Restoring ${fault}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/fault/restore`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault})
+      });
+      const data = await res.json();
+      addLog(`Restored: ${fault} on ${data.detail.router}`, 'restored');
+      setTerminal(`<span class="prompt">argus# </span><span class="cmd">fault restore ${fault}</span>
+Status  : RESTORED
+Fault   : ${fault}
+Router  : ${data.detail.router}
+Time    : ${data.detail.timestamp}
+
+<span class="muted">${data.output || 'Command executed successfully'}</span>
+<span class="blink">_</span>`);
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'restored');
+    }
+    setBtns(false);
+  }
+
+  async function runDiagnostic() {
+    const fault = document.getElementById('fault-select').value;
+    const router = FAULT_ROUTERS[fault];
+    setBtns(true);
+    addLog(`Running diagnostic: ${fault} on ${router}`, 'info');
+    setTerminal(`<span class="muted"><span class="spinner"></span>Running diagnostics on ${router}...</span>`);
+    try {
+      const res = await fetch(`${API}/api/diagnostic/run`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fault, router})
+      });
+      const data = await res.json();
+      let out = `<span class="prompt">argus# </span><span class="cmd">diagnostic run ${fault} --router ${router}</span>\n`;
+      out += `Fault   : ${data.fault}\nRouter  : ${data.router}\nTime    : ${data.timestamp}\n`;
+      out += `${'─'.repeat(48)}\n\n`;
+      for (const [cmd, result] of Object.entries(data.diagnostics)) {
+        out += `<span class="prompt">${router}# </span><span class="cmd">${cmd}</span>\n${result}\n`;
+      }
+      out += `<span class="blink">_</span>`;
+      setTerminal(out);
+      addLog(`Diagnostic complete: ${fault}`, 'info');
+    } catch(e) {
+      addLog(`Error: ${e.message}`, 'info');
+    }
+    setBtns(false);
+  }
+
+  checkAPI();
+  loadRouters();
+  setInterval(checkAPI, 10000);
+  setInterval(loadRouters, 30000);
+</script>
+
+</body>
+</html>
