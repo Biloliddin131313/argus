@@ -55,3 +55,10 @@ echo "  Grafana         : http://localhost:3001"
 echo "  Prometheus      : http://localhost:9090"
 echo "  REST API        : http://localhost:5001"
 echo ""
+# Start runbook engine
+echo "Starting runbook engine..."
+pkill -f "python3.*runbook_engine.py" 2>/dev/null
+sleep 2
+python3 ~/Automated_Network_Troubleshooting/automation/runbook_engine.py &
+
+echo "  Runbook engine  : http://localhost:5002"
