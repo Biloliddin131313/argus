@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime
 import subprocess
+import os
 import requests
 
 app = Flask(__name__)
@@ -180,4 +181,4 @@ def get_runbooks():
 
 if __name__ == "__main__":
     print("\nANT REST API starting on http://localhost:5001\n")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)), debug=False)
