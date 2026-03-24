@@ -1,6 +1,6 @@
 # Automated Network Troubleshooting (ARGUS)
 
-ARGUS is a network automation system that watches your infrastructure around the clock. When something breaks, it automatically figures out what happened, runs the right diagnostics, and delivers a full report to your engineers — without anyone needing to be on call.
+ARGUS is a network automation system that watches your infrastructure around the clock. When something breaks, it automatically figures out what happened, runs the right diagnostics, and delivers a full report to your engineers.
 
 
 
