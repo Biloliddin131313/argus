@@ -1,6 +1,7 @@
-# Automated Network Troubleshooting
+# Automated Network Troubleshooting(Argus)
 
-An automated system for detecting network faults, executing diagnostics, and delivering real-time reports to engineers.
+A full network automation system that monitors virtual routers, detects faults automatically, runs diagnostic commands
+ and delivers reports to engineers in real time.
 
 ---
 
