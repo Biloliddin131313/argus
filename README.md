@@ -1,14 +1,14 @@
 # Automated Network Troubleshooting (ARGUS)
 
-ARGUS is a network automation system that watches your infrastructure around the clock. When something breaks, it automatically figures out what happened, runs the right diagnostics, and delivers a full report to your engineers — no one needs to be staring at a screen waiting for alerts.
+ARGUS is a network automation system that watches your infrastructure around the clock. When something breaks, it automatically figures out what happened, runs the right diagnostics, and delivers a full report to your engineers.
 
-Built for COM617 Industrial Consulting Project at Southampton Solent University, 2025/26.
+
 
 ---
 
 ## Live Demo
 
-Try it right now — no setup needed:
+Try it right now:
 
 - **ARGUS Dashboard:** https://biloliddin131313.github.io/argus/
 - **REST API:** https://web-production-4de00.up.railway.app/api/status
@@ -26,18 +26,16 @@ A fault happens on the network. Within seconds:
 5. A full report lands in Mattermost
 6. Grafana updates to show what went down
 
-Engineers get everything they need without touching a keyboard.
-
 ---
 
 ## Architecture
 
 The system is built in four layers, each with a clear job:
 
-- **Network layer** — Three virtual Arista cEOS routers running BGP, generating real SNMP traps when faults occur
-- **Monitoring layer** — OpenNMS receives traps, Prometheus collects metrics every 30 seconds
-- **Automation layer** — Python runbook engine polls for alarms and executes diagnostics automatically
-- **Visualisation layer** — ARGUS dashboard and Grafana panels show everything in real time
+- **Network layer** -Three virtual Arista cEOS routers running BGP, generating real SNMP traps when faults occur
+- **Monitoring layer** -OpenNMS receives traps, Prometheus collects metrics every 30 seconds
+- **Automation layer** -Python runbook engine polls for alarms and executes diagnostics automatically
+- **Visualisation layer** -ARGUS dashboard and Grafana panels show everything in real time
 
 ---
 
@@ -137,10 +135,3 @@ The system handles four fault types out of the box:
 - Arista cEOS image imported as ceos:latest
 - Python packages: flask, flask-cors, requests, netmiko, prometheus-client
 
----
-
-## Author
-
-Biloliddin Turaev
-BSc Cyber Security Management, Southampton Solent University
-GitHub: https://github.com/Biloliddin131313
